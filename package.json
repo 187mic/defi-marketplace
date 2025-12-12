@@ -1,0 +1,38 @@
+{
+  "name": "defi-marketplace",
+  "version": "1.0.0",
+  "description": "Decentralized P2P Marketplace",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@safe-global/api-kit": "^4.0.1",
+    "@safe-global/protocol-kit": "^6.1.2",
+    "@tanstack/react-query": "^5.90.12",
+    "@types/node": "^25.0.1",
+    "@types/react": "^19.2.7",
+    "autoprefixer": "^10.4.22",
+    "ethers": "^6.16.0",
+    "next": "^16.0.10",
+    "postcss": "^8.5.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "viem": "^2.41.2",
+    "wagmi": "^3.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.10",
+    "prettier": "^3.7.4",
+    "prisma": "^5.22.0"
+  }
+}
