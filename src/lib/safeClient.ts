@@ -78,7 +78,7 @@ export async function predictSafeAddress(
     if (!proxyCreationCodeFn) {
       throw new Error('proxyCreationCode method not found on factory contract');
     }
-    const proxyCreationCode = await proxyCreationCodeFn();
+    const proxyCreationCode = await proxyCreationCodeFn.call(factory);
 
     // Generate initializer
     const initializer = generateSafeInitializer(owners, threshold);
@@ -146,7 +146,8 @@ export async function deploySafe(
   if (!createProxyFn) {
     throw new Error('createProxyWithNonce method not found on factory contract');
   }
-  const tx = await createProxyFn(
+  const tx = await createProxyFn.call(
+    factory,
     SAFE_SINGLETON_ADDRESS,
     initializer,
     nonce
@@ -293,7 +294,8 @@ export async function executeTransaction(
   if (!execTransactionFn) {
     throw new Error('execTransaction method not found on safe contract');
   }
-  const tx = await execTransactionFn(
+  const tx = await execTransactionFn.call(
+    safe,
     to,
     value,
     data,
@@ -363,9 +365,9 @@ export async function getSafeInfo(safeAddress: string): Promise<{
     }
 
     const [owners, threshold, nonce] = await Promise.all([
-      getOwnersFn(),
-      getThresholdFn(),
-      nonceFn(),
+      getOwnersFn.call(safe),
+      getThresholdFn.call(safe),
+      nonceFn.call(safe),
     ]);
 
     return {
@@ -389,7 +391,7 @@ export async function isOwner(
     if (!isOwnerFn) {
       throw new Error('isOwner method not found on safe contract');
     }
-    return isOwnerFn(address) as Promise<boolean>;
+    return isOwnerFn.call(safe, address) as Promise<boolean>;
   });
 }
 
@@ -410,7 +412,7 @@ export async function getSafeBalance(
     if (!balanceOfFn) {
       throw new Error('balanceOf method not found on token contract');
     }
-    return balanceOfFn(safeAddress) as Promise<bigint>;
+    return balanceOfFn.call(token, safeAddress) as Promise<bigint>;
   });
 }
 
@@ -431,7 +433,8 @@ export async function getTransactionHash(
     if (!getTransactionHashFn) {
       throw new Error('getTransactionHash method not found on safe contract');
     }
-    const hash = await getTransactionHashFn(
+    const hash = await getTransactionHashFn.call(
+      safe,
       to,
       value,
       data,

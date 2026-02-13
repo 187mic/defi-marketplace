@@ -74,7 +74,7 @@ export async function getSafeNonce(safeAddress: string): Promise<number> {
     if (!nonceFn) {
       throw new Error('nonce method not found on safe contract');
     }
-    const nonce = await nonceFn();
+    const nonce = await nonceFn.call(safe);
     return Number(nonce);
   });
 }
@@ -95,7 +95,8 @@ export async function getTransactionHash(
     if (!getTransactionHashFn) {
       throw new Error('getTransactionHash method not found on safe contract');
     }
-    const hash = await getTransactionHashFn(
+    const hash = await getTransactionHashFn.call(
+      safe,
       tx.to,
       tx.value,
       tx.data,
