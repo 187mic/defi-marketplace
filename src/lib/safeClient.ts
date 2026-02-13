@@ -74,11 +74,7 @@ export async function predictSafeAddress(
     );
 
     // Get proxy creation code
-    const proxyCreationCodeFn = factory.proxyCreationCode;
-    if (!proxyCreationCodeFn) {
-      throw new Error('proxyCreationCode method not found on factory contract');
-    }
-    const proxyCreationCode = await proxyCreationCodeFn.call(factory);
+    const proxyCreationCode = await factory.proxyCreationCode!();
 
     // Generate initializer
     const initializer = generateSafeInitializer(owners, threshold);
@@ -142,12 +138,7 @@ export async function deploySafe(
   const nonce = saltNonce ?? Date.now().toString();
 
   // Deploy the proxy
-  const createProxyFn = factory.createProxyWithNonce;
-  if (!createProxyFn) {
-    throw new Error('createProxyWithNonce method not found on factory contract');
-  }
-  const tx = await createProxyFn.call(
-    factory,
+  const tx = await factory.createProxyWithNonce!(
     SAFE_SINGLETON_ADDRESS,
     initializer,
     nonce
@@ -290,12 +281,7 @@ export async function executeTransaction(
 ): Promise<TransactionResult> {
   const safe = new Contract(safeAddress, SAFE_ABI, signer);
 
-  const execTransactionFn = safe.execTransaction;
-  if (!execTransactionFn) {
-    throw new Error('execTransaction method not found on safe contract');
-  }
-  const tx = await execTransactionFn.call(
-    safe,
+  const tx = await safe.execTransaction!(
     to,
     value,
     data,
@@ -357,17 +343,10 @@ export async function getSafeInfo(safeAddress: string): Promise<{
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
-    const getOwnersFn = safe.getOwners;
-    const getThresholdFn = safe.getThreshold;
-    const nonceFn = safe.nonce;
-    if (!getOwnersFn || !getThresholdFn || !nonceFn) {
-      throw new Error('Required methods not found on safe contract');
-    }
-
     const [owners, threshold, nonce] = await Promise.all([
-      getOwnersFn.call(safe),
-      getThresholdFn.call(safe),
-      nonceFn.call(safe),
+      safe.getOwners!(),
+      safe.getThreshold!(),
+      safe.nonce!(),
     ]);
 
     return {
@@ -387,11 +366,7 @@ export async function isOwner(
 ): Promise<boolean> {
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
-    const isOwnerFn = safe.isOwner;
-    if (!isOwnerFn) {
-      throw new Error('isOwner method not found on safe contract');
-    }
-    return isOwnerFn.call(safe, address) as Promise<boolean>;
+    return safe.isOwner!(address) as Promise<boolean>;
   });
 }
 
@@ -408,11 +383,7 @@ export async function getSafeBalance(
     }
 
     const token = new Contract(tokenAddress, ERC20_ABI, provider);
-    const balanceOfFn = token.balanceOf;
-    if (!balanceOfFn) {
-      throw new Error('balanceOf method not found on token contract');
-    }
-    return balanceOfFn.call(token, safeAddress) as Promise<bigint>;
+    return token.balanceOf!(safeAddress) as Promise<bigint>;
   });
 }
 
@@ -429,12 +400,7 @@ export async function getTransactionHash(
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
-    const getTransactionHashFn = safe.getTransactionHash;
-    if (!getTransactionHashFn) {
-      throw new Error('getTransactionHash method not found on safe contract');
-    }
-    const hash = await getTransactionHashFn.call(
-      safe,
+    const hash = await safe.getTransactionHash!(
       to,
       value,
       data,
