@@ -74,7 +74,7 @@ export async function predictSafeAddress(
     );
 
     // Get proxy creation code
-    const proxyCreationCode = await factory.proxyCreationCode();
+    const proxyCreationCode = await factory.proxyCreationCode!();
 
     // Generate initializer
     const initializer = generateSafeInitializer(owners, threshold);
@@ -138,7 +138,7 @@ export async function deploySafe(
   const nonce = saltNonce ?? Date.now().toString();
 
   // Deploy the proxy
-  const tx = await factory.createProxyWithNonce(
+  const tx = await factory.createProxyWithNonce!(
     SAFE_SINGLETON_ADDRESS,
     initializer,
     nonce
@@ -281,7 +281,7 @@ export async function executeTransaction(
 ): Promise<TransactionResult> {
   const safe = new Contract(safeAddress, SAFE_ABI, signer);
 
-  const tx = await safe.execTransaction(
+  const tx = await safe.execTransaction!(
     to,
     value,
     data,
@@ -344,9 +344,9 @@ export async function getSafeInfo(safeAddress: string): Promise<{
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
     const [owners, threshold, nonce] = await Promise.all([
-      safe.getOwners(),
-      safe.getThreshold(),
-      safe.nonce(),
+      safe.getOwners!(),
+      safe.getThreshold!(),
+      safe.nonce!(),
     ]);
 
     return {
@@ -366,7 +366,7 @@ export async function isOwner(
 ): Promise<boolean> {
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
-    return safe.isOwner(address) as Promise<boolean>;
+    return safe.isOwner!(address) as Promise<boolean>;
   });
 }
 
@@ -383,7 +383,7 @@ export async function getSafeBalance(
     }
 
     const token = new Contract(tokenAddress, ERC20_ABI, provider);
-    return token.balanceOf(safeAddress) as Promise<bigint>;
+    return token.balanceOf!(safeAddress) as Promise<bigint>;
   });
 }
 
@@ -400,7 +400,7 @@ export async function getTransactionHash(
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
-    const hash = await safe.getTransactionHash(
+    const hash = await safe.getTransactionHash!(
       to,
       value,
       data,

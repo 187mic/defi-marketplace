@@ -70,7 +70,7 @@ interface ProposeTransactionParams {
 export async function getSafeNonce(safeAddress: string): Promise<number> {
   return withFailover(async (provider) => {
     const safe = new ethers.Contract(safeAddress, SAFE_ABI, provider);
-    const nonce = await safe.nonce();
+    const nonce = await safe.nonce!();
     return Number(nonce);
   });
 }
@@ -87,7 +87,7 @@ export async function getTransactionHash(
 
     const nonce = tx.nonce ?? (await getSafeNonce(safeAddress));
 
-    const hash = await safe.getTransactionHash(
+    const hash = await safe.getTransactionHash!(
       tx.to,
       tx.value,
       tx.data,
