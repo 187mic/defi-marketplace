@@ -122,7 +122,7 @@ Create `.git/hooks/pre-commit`:
 #!/bin/sh
 # Prevent commits with potential secrets
 
-if git diff --cached | grep -iE "(api[_-]?key|secret|password|private[_-]?key|token).*[:=]"; then
+if git diff --cached | grep -iE "(api[_-]?key|secret|password|private[_-]?key|token).*[:=].{0,5}['\"]?[a-zA-Z0-9_-]{20,}"; then
   echo "⚠️  Potential secret detected in commit!"
   echo "Please review your changes and remove any sensitive information."
   exit 1

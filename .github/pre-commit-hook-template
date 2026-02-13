@@ -25,8 +25,8 @@ fi
 # Check for potential API keys and secrets in code
 CACHED_DIFF=$(git diff --cached)
 
-# Check for common secret patterns
-if echo "$CACHED_DIFF" | grep -iE "(api[_-]?key|secret|password|private[_-]?key|token).*[:=].*['\"][a-zA-Z0-9_-]{20,}['\"]"; then
+# Check for common secret patterns (both quoted and unquoted)
+if echo "$CACHED_DIFF" | grep -iE "(api[_-]?key|secret|password|private[_-]?key|token).*[:=].{0,5}['\"]?[a-zA-Z0-9_-]{20,}"; then
   echo "${RED}❌ ERROR: Potential hardcoded secret detected!${NC}"
   echo "Found patterns that look like API keys or secrets in your changes."
   echo "Please use environment variables instead of hardcoding secrets."

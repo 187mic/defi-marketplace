@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Script to install the pre-commit hook for secret detection
 # Run this after cloning the repository: ./install-hooks.sh
 
