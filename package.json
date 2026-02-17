@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@tailwindcss/postcss": "^4.1.18",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.10",
     "prettier": "^3.7.4",
