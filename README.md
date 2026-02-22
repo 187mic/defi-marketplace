@@ -166,6 +166,49 @@ Integration with Safe smart accounts for secure escrow:
 - `executeTransaction(signer, safeAddress, to, value, data, signatures)` - Execute a Safe transaction
 - `createReleaseTransaction(safeAddress, recipient, amount, feeRecipient, feeBps, tokenAddress?)` - Create release transaction with platform fee
 
+### Usage Examples
+
+#### Token Approval Flow
+
+```typescript
+import { ethers } from 'ethers';
+import { approveToken, getTokenAllowance } from '@/lib/safeClient';
+
+// 1. Check current allowance
+const currentAllowance = await getTokenAllowance(
+  tokenAddress,
+  ownerAddress,
+  spenderAddress
+);
+
+// 2. Approve if needed
+if (currentAllowance < requiredAmount) {
+  const result = await approveToken(
+    signer,
+    tokenAddress,
+    spenderAddress,
+    requiredAmount
+  );
+  console.log(`Approved! TX: ${result.hash}`);
+}
+```
+
+#### Creating a Trade Offer
+
+```typescript
+// Step 1: Predict Safe address for escrow
+const safeAddress = await predictSafeAddress([buyer, seller], 2);
+
+// Step 2: Approve tokens for the Safe
+await approveToken(signer, tokenAddress, safeAddress, amount);
+
+// Step 3: Deploy Safe and fund it
+const { txHash } = await deploySafe(signer, [buyer, seller], 2);
+
+// Step 4: Create offer on marketplace
+// ... marketplace contract interaction ...
+```
+
 ## Technology Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript
