@@ -39,6 +39,7 @@ const ERC20_ABI = [
   'function transfer(address to, uint256 amount) external returns (bool)',
   'function balanceOf(address account) external view returns (uint256)',
   'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
 ];
 
 /**
@@ -411,6 +412,75 @@ export async function getSafeBalance(
       throw new Error('balanceOf method not found on ERC20 contract');
     }
     return balanceOf(safeAddress) as Promise<bigint>;
+  });
+}
+
+/**
+ * Approve ERC20 token spending
+ */
+export async function approveToken(
+  signer: Signer,
+  tokenAddress: string,
+  spenderAddress: string,
+  amount: bigint
+): Promise<TransactionResult> {
+  // Validate inputs
+  if (!ethers.isAddress(tokenAddress)) {
+    throw new Error(`Invalid token address: ${tokenAddress}`);
+  }
+  if (!ethers.isAddress(spenderAddress)) {
+    throw new Error(`Invalid spender address: ${spenderAddress}`);
+  }
+  if (amount < 0n) {
+    throw new Error('Amount must be non-negative');
+  }
+
+  const token = new Contract(tokenAddress, ERC20_ABI, signer);
+  
+  const approve = token.approve;
+  if (!approve) {
+    throw new Error('approve method not found on ERC20 contract');
+  }
+
+  const tx = await approve(spenderAddress, amount);
+  const receipt = await tx.wait();
+
+  return {
+    hash: receipt.hash as string,
+    status: receipt.status === 1 ? 'confirmed' : 'failed',
+    blockNumber: receipt.blockNumber as number,
+    confirmations: await receipt.confirmations(),
+  };
+}
+
+/**
+ * Get ERC20 token allowance
+ */
+export async function getTokenAllowance(
+  tokenAddress: string,
+  ownerAddress: string,
+  spenderAddress: string
+): Promise<bigint> {
+  // Validate inputs
+  if (!ethers.isAddress(tokenAddress)) {
+    throw new Error(`Invalid token address: ${tokenAddress}`);
+  }
+  if (!ethers.isAddress(ownerAddress)) {
+    throw new Error(`Invalid owner address: ${ownerAddress}`);
+  }
+  if (!ethers.isAddress(spenderAddress)) {
+    throw new Error(`Invalid spender address: ${spenderAddress}`);
+  }
+
+  return withFailover(async (provider) => {
+    const token = new Contract(tokenAddress, ERC20_ABI, provider);
+    
+    const allowance = token.allowance;
+    if (!allowance) {
+      throw new Error('allowance method not found on ERC20 contract');
+    }
+
+    return allowance(ownerAddress, spenderAddress) as Promise<bigint>;
   });
 }
 

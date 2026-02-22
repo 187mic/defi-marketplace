@@ -148,6 +148,23 @@ Integration with Safe smart accounts for secure escrow:
 - CREATE2 address prediction for deterministic escrow addresses
 - Transaction service integration
 - Multi-signature support (future feature)
+- ERC20 token approval and allowance management
+
+#### Available Functions
+
+**Token Approval:**
+- `approveToken(signer, tokenAddress, spenderAddress, amount)` - Approve a spender to transfer tokens
+- `getTokenAllowance(tokenAddress, ownerAddress, spenderAddress)` - Check current approval amount
+
+**Safe Operations:**
+- `deploySafe(signer, owners, threshold, saltNonce?)` - Deploy a new Safe wallet
+- `predictSafeAddress(owners, threshold, saltNonce?)` - Predict Safe address before deployment
+- `getSafeInfo(safeAddress)` - Get Safe configuration (owners, threshold, nonce)
+- `getSafeBalance(safeAddress, tokenAddress?)` - Get ETH or ERC20 balance
+
+**Transactions:**
+- `executeTransaction(signer, safeAddress, to, value, data, signatures)` - Execute a Safe transaction
+- `createReleaseTransaction(safeAddress, recipient, amount, feeRecipient, feeBps, tokenAddress?)` - Create release transaction with platform fee
 
 ## Technology Stack
 
@@ -164,6 +181,7 @@ Integration with Safe smart accounts for secure escrow:
 - [x] RPC client with multi-provider failover
 - [x] Safe client integration
 - [x] Basic marketplace UI
+- [x] ERC20 token approval functionality
 - [ ] Smart contract deployment
 - [ ] Escrow functionality
 - [ ] Token swap execution
