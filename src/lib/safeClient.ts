@@ -39,6 +39,7 @@ const ERC20_ABI = [
   'function transfer(address to, uint256 amount) external returns (bool)',
   'function balanceOf(address account) external view returns (uint256)',
   'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
 ];
 
 /**
@@ -74,7 +75,10 @@ export async function predictSafeAddress(
     );
 
     // Get proxy creation code
-    const proxyCreationCode = await factory.proxyCreationCode();
+    const proxyCreationCode = await factory.proxyCreationCode?.();
+    if (!proxyCreationCode) {
+      throw new Error('Failed to get proxy creation code');
+    }
 
     // Generate initializer
     const initializer = generateSafeInitializer(owners, threshold);
@@ -138,7 +142,11 @@ export async function deploySafe(
   const nonce = saltNonce ?? Date.now().toString();
 
   // Deploy the proxy
-  const tx = await factory.createProxyWithNonce(
+  const createProxy = factory.createProxyWithNonce;
+  if (!createProxy) {
+    throw new Error('createProxyWithNonce method not found on factory contract');
+  }
+  const tx = await createProxy(
     SAFE_SINGLETON_ADDRESS,
     initializer,
     nonce
@@ -281,7 +289,11 @@ export async function executeTransaction(
 ): Promise<TransactionResult> {
   const safe = new Contract(safeAddress, SAFE_ABI, signer);
 
-  const tx = await safe.execTransaction(
+  const execTx = safe.execTransaction;
+  if (!execTx) {
+    throw new Error('execTransaction method not found on Safe contract');
+  }
+  const tx = await execTx(
     to,
     value,
     data,
@@ -343,10 +355,18 @@ export async function getSafeInfo(safeAddress: string): Promise<{
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
+    const getOwners = safe.getOwners;
+    const getThreshold = safe.getThreshold;
+    const getNonce = safe.nonce;
+    
+    if (!getOwners || !getThreshold || !getNonce) {
+      throw new Error('Required Safe contract methods not found');
+    }
+
     const [owners, threshold, nonce] = await Promise.all([
-      safe.getOwners(),
-      safe.getThreshold(),
-      safe.nonce(),
+      getOwners(),
+      getThreshold(),
+      getNonce(),
     ]);
 
     return {
@@ -366,7 +386,11 @@ export async function isOwner(
 ): Promise<boolean> {
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
-    return safe.isOwner(address) as Promise<boolean>;
+    const checkIsOwner = safe.isOwner;
+    if (!checkIsOwner) {
+      throw new Error('isOwner method not found on Safe contract');
+    }
+    return checkIsOwner(address) as Promise<boolean>;
   });
 }
 
@@ -383,7 +407,80 @@ export async function getSafeBalance(
     }
 
     const token = new Contract(tokenAddress, ERC20_ABI, provider);
-    return token.balanceOf(safeAddress) as Promise<bigint>;
+    const balanceOf = token.balanceOf;
+    if (!balanceOf) {
+      throw new Error('balanceOf method not found on ERC20 contract');
+    }
+    return balanceOf(safeAddress) as Promise<bigint>;
+  });
+}
+
+/**
+ * Approve ERC20 token spending
+ */
+export async function approveToken(
+  signer: Signer,
+  tokenAddress: string,
+  spenderAddress: string,
+  amount: bigint
+): Promise<TransactionResult> {
+  // Validate inputs
+  if (!ethers.isAddress(tokenAddress)) {
+    throw new Error(`Invalid token address: ${tokenAddress}`);
+  }
+  if (!ethers.isAddress(spenderAddress)) {
+    throw new Error(`Invalid spender address: ${spenderAddress}`);
+  }
+  if (amount < 0n) {
+    throw new Error('Amount must be non-negative');
+  }
+
+  const token = new Contract(tokenAddress, ERC20_ABI, signer);
+  
+  const approve = token.approve;
+  if (!approve) {
+    throw new Error('approve method not found on ERC20 contract');
+  }
+
+  const tx = await approve(spenderAddress, amount);
+  const receipt = await tx.wait();
+
+  return {
+    hash: receipt.hash as string,
+    status: receipt.status === 1 ? 'confirmed' : 'failed',
+    blockNumber: receipt.blockNumber as number,
+    confirmations: await receipt.confirmations(),
+  };
+}
+
+/**
+ * Get ERC20 token allowance
+ */
+export async function getTokenAllowance(
+  tokenAddress: string,
+  ownerAddress: string,
+  spenderAddress: string
+): Promise<bigint> {
+  // Validate inputs
+  if (!ethers.isAddress(tokenAddress)) {
+    throw new Error(`Invalid token address: ${tokenAddress}`);
+  }
+  if (!ethers.isAddress(ownerAddress)) {
+    throw new Error(`Invalid owner address: ${ownerAddress}`);
+  }
+  if (!ethers.isAddress(spenderAddress)) {
+    throw new Error(`Invalid spender address: ${spenderAddress}`);
+  }
+
+  return withFailover(async (provider) => {
+    const token = new Contract(tokenAddress, ERC20_ABI, provider);
+    
+    const allowance = token.allowance;
+    if (!allowance) {
+      throw new Error('allowance method not found on ERC20 contract');
+    }
+
+    return allowance(ownerAddress, spenderAddress) as Promise<bigint>;
   });
 }
 
@@ -400,7 +497,11 @@ export async function getTransactionHash(
   return withFailover(async (provider) => {
     const safe = new Contract(safeAddress, SAFE_ABI, provider);
 
-    const hash = await safe.getTransactionHash(
+    const getTxHash = safe.getTransactionHash;
+    if (!getTxHash) {
+      throw new Error('getTransactionHash method not found on Safe contract');
+    }
+    const hash = await getTxHash(
       to,
       value,
       data,

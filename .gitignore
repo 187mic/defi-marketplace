@@ -67,3 +67,4 @@ artifacts/
 cache/
 typechain/
 typechain-types/
+examples/
